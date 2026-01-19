@@ -58,6 +58,8 @@ public class MockObaStop {
             return "Nebraska Av @ Columbus Dr";
         }
 
+        public String getPlatformCode() { return ""; }
+
         @Override
         public Location getLocation() {
             return LocationUtils.makeLocation(getLatitude(), getLongitude());

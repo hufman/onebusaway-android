@@ -99,7 +99,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/stop_details"
         style="@style/ListItem"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="50dp"
@@ -133,5 +133,23 @@
             app:layout_constraintTop_toTopOf="@id/time"
             app:layout_constraintBottom_toBottomOf="@id/time"
             app:layout_constraintStart_toEndOf="@+id/time" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="12dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true">
+
+        <TextView
+            android:id="@+id/platform_info"
+            style="@style/PlatformInfo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:gravity="center"
+            tools:text="9"
+            android:background="@drawable/border_platform_info"
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </RelativeLayout>

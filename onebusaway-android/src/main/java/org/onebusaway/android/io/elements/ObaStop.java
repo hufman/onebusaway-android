@@ -42,6 +42,8 @@ public interface ObaStop extends ObaElement {
      */
     public String getName();
 
+    public String getPlatformCode();
+
     /**
      * Returns the location of the stop.
      *

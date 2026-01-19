@@ -915,6 +915,14 @@ public class TripDetailsListFragment extends ListFragment {
             realtime.setVisibility(View.GONE);
             ViewGroup occupancyView = convertView.findViewById(R.id.occupancy);
 
+            TextView platformInfo = (TextView) convertView.findViewById(R.id.platform_info);
+            if (!stop.getPlatformCode().isEmpty()) {
+                platformInfo.setVisibility(View.VISIBLE);
+                platformInfo.setText(stop.getPlatformCode());
+            } else {
+                platformInfo.setVisibility(View.GONE);
+            }
+
             long date;
             long deviation = 0;
             int statusColor;
