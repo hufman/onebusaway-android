@@ -342,7 +342,10 @@ public class BaseMapFragment extends SupportMapFragment
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.dark_map));
         } else {
             // When in light mode, just remove POIs.
-            String removePOIStyle = "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]";
+            String removePOIStyle = "[" +
+                    "{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}," +
+                    "{\"featureType\":\"transit.station\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}," +
+                "]";
             mMap.setMapStyle(new MapStyleOptions(removePOIStyle));
         }
 
