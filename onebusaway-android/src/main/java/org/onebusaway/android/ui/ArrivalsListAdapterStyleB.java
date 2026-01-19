@@ -141,6 +141,7 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
 
         TextView routeName = view.findViewById(R.id.routeName);
         TextView destination = view.findViewById(R.id.routeDestination);
+        TextView platformInfo = view.findViewById(R.id.platform_info);
 
         // TableLayout that we will fill with TableRows of arrival times
         TableLayout arrivalTimesLayout = view.findViewById(R.id.arrivalTimeLayout);
@@ -248,6 +249,14 @@ public class ArrivalsListAdapterStyleB extends ArrivalsListAdapterBase<CombinedA
                 // Historical occupancy data
                 UIUtils.setOccupancyVisibilityAndColor(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
                 UIUtils.setOccupancyContentDescription(occupancyView, stopInfo.getHistoricalOccupancy(), OccupancyState.HISTORICAL);
+            }
+
+            // Set platform info
+            if (stopInfo.hasPlatformInfo()) {
+                platformInfo.setVisibility(View.VISIBLE);
+                platformInfo.setText(stopInfo.getPlatformInfo());
+            } else {
+                platformInfo.setVisibility(View.GONE);
             }
 
             // Set arrival times and status in views

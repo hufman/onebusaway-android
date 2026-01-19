@@ -76,6 +76,7 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         TextView carCount = (TextView) view.findViewById(R.id.car_count);
         TextView etaView = (TextView) view.findViewById(R.id.eta);
         TextView minView = (TextView) view.findViewById(R.id.eta_min);
+        TextView platformInfo = (TextView) view.findViewById(R.id.platform_info);
         ViewGroup realtimeView = (ViewGroup) view.findViewById(R.id.eta_realtime_indicator);
         ViewGroup occupancyView = view.findViewById(R.id.occupancy);
         ImageView moreView = (ImageView) view.findViewById(R.id.more_horizontal);
@@ -137,6 +138,13 @@ public class ArrivalsListAdapterStyleA extends ArrivalsListAdapterBase<ArrivalIn
         etaView.setTextColor(color);
         minView.setTextColor(color);
         d.setColor(color);
+
+        if (stopInfo.hasPlatformInfo()) {
+            platformInfo.setVisibility(View.VISIBLE);
+            platformInfo.setText(stopInfo.getPlatformInfo());
+        } else {
+            platformInfo.setVisibility(View.GONE);
+        }
 
         ((GradientDrawable) carCount.getBackground()).setColor(color);
 

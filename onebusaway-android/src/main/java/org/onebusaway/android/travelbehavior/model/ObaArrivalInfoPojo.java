@@ -79,6 +79,10 @@ public class ObaArrivalInfoPojo {
 
     private final Occupancy occupancyStatus;
 
+    private final String actualTrack;
+
+    private final String scheduledTrack;
+
     public ObaArrivalInfoPojo() {
         routeId = "";
         routeShortName = "";
@@ -107,6 +111,8 @@ public class ObaArrivalInfoPojo {
         blockTripSequence = 0;
         historicalOccupancy = null;
         occupancyStatus = null;
+        actualTrack = "";
+        scheduledTrack = "";
     }
 
     public ObaArrivalInfoPojo(ObaArrivalInfo info) {
@@ -142,6 +148,8 @@ public class ObaArrivalInfoPojo {
         blockTripSequence = info.getBlockTripSequence();
         historicalOccupancy = info.getHistoricalOccupancy();
         occupancyStatus = info.getOccupancyStatus();
+        actualTrack = info.getActualTrack();
+        scheduledTrack = info.getScheduledTrack();
     }
 
     /**
@@ -332,4 +340,14 @@ public class ObaArrivalInfoPojo {
         return blockTripSequence;
     }
 
+    /**
+     * @return The actualTrack information if available, otherwise any scheduledTrack information
+     */
+    public String getTrack() {
+        if (!actualTrack.isEmpty()) {
+            return actualTrack;
+        } else {
+            return scheduledTrack;
+        }
+    }
 }

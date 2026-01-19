@@ -365,6 +365,24 @@ public final class ArrivalInfo {
     }
 
     /**
+     * @return The text to show in the Platform Information view
+     */
+    public final String getPlatformInfo() {
+        if (!mInfo.getActualTrack().isEmpty()) {
+            return mInfo.getActualTrack();
+        } else {
+            return mInfo.getScheduledTrack();
+        }
+    }
+
+    /**
+     * @return Whether platform information is available
+     */
+    public final boolean hasPlatformInfo() {
+        return !getPlatformInfo().isEmpty();
+    }
+
+    /**
      * Returns true if this route is a user-designated favorite, false if it is not
      *
      * @return true if this route is a user-designated favorite, false if it is not

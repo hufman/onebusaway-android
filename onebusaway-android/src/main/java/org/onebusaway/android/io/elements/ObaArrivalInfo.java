@@ -109,6 +109,10 @@ public final class ObaArrivalInfo implements Serializable{
 
     private final String occupancyStatus;
 
+    private final String actualTrack;
+
+    private final String scheduledTrack;
+
     ObaArrivalInfo() {
         routeId = "";
         routeShortName = "";
@@ -137,6 +141,8 @@ public final class ObaArrivalInfo implements Serializable{
         blockTripSequence = 0;
         historicalOccupancy = "";
         occupancyStatus = "";
+        actualTrack = "";
+        scheduledTrack = "";
     }
 
     /**
@@ -351,6 +357,20 @@ public final class ObaArrivalInfo implements Serializable{
      */
     public Occupancy getOccupancyStatus() {
         return Occupancy.fromString(occupancyStatus);
+    }
+
+    /**
+     * @return Any updated information about the track
+     */
+    public String getActualTrack() {
+        return actualTrack;
+    }
+
+    /**
+     * @return The originally scheduled track
+     */
+    public String getScheduledTrack() {
+        return scheduledTrack;
     }
 
     /**
