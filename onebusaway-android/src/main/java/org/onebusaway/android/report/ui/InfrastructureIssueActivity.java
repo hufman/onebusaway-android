@@ -308,7 +308,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
             String stopName = getIntent().getStringExtra(MapParams.STOP_NAME);
             String stopCode = getIntent().getStringExtra(MapParams.STOP_CODE);
             if (stopId != null) {
-                mIssueLocationHelper.setObaStop(new ObaStopElement(stopId, lat, lon, stopName, stopCode, ""));
+                mIssueLocationHelper.setObaStop(new ObaStopElement(stopId, lat, lon, stopName, stopCode, "", ""));
                 showBusStopHeader(stopName);
                 mShowStopMarker = true;
             }
@@ -386,7 +386,7 @@ public class InfrastructureIssueActivity extends BaseReportActivity implements
                 double lon = savedInstanceState.getDouble(MapParams.CENTER_LON, 0);
                 Location location = LocationUtils.makeLocation(lat, lon);
                 mIssueLocationHelper.updateMarkerPosition(location, new ObaStopElement(bundleStopId,
-                        lat, lon, stopName, stopCode, ""));
+                        lat, lon, stopName, stopCode, "", ""));
             }
             String infoText = savedInstanceState.getString(SHOW_INFO);
             if (infoText != null) {

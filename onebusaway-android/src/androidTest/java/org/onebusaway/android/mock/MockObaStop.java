@@ -58,6 +58,9 @@ public class MockObaStop {
             return "Nebraska Av @ Columbus Dr";
         }
 
+        @Override
+        public String getParent() { return ""; }
+
         public String getPlatformCode() { return ""; }
 
         @Override

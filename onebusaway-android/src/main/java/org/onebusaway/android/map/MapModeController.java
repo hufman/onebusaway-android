@@ -67,6 +67,8 @@ public interface MapModeController {
 
         void showStops(List<ObaStop> stops, ObaReferences refs);
 
+        void redrawStops();
+
         void showBikeStations(List<BikeRentalStation> bikeStations);
 
         void clearBikeStations();

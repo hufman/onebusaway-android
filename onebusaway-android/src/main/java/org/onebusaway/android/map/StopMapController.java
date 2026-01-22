@@ -172,6 +172,11 @@ public class StopMapController extends BaseMapController implements
     }
 
     @Override
+    public void onMapZoomChanged() {
+        mCallback.redrawStops();
+    }
+
+    @Override
     public Loader<StopsResponse> onCreateLoader(int id, Bundle args) {
         StopsLoader loader = new StopsLoader(mCallback);
         StopsRequest req = new StopsRequest(mCallback.getMapView());

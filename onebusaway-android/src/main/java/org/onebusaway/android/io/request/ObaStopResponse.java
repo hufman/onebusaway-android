@@ -62,6 +62,9 @@ public final class ObaStopResponse extends ObaResponseWithRefs implements ObaSto
         return data.entry.getName();
     }
 
+    @Override
+    public String getParent() { return data.entry.getParent(); }
+
     public String getPlatformCode() { return data.entry.getPlatformCode(); }
 
     @Override

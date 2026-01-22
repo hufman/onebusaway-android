@@ -207,12 +207,14 @@ public abstract class BaseMapController implements MapModeController,
     @Override
     public void onMapZoomChanging() {
         //Log.d(TAG, "Map zoom changing");
+        mCallback.redrawStops();
     }
 
     @Override
     public void onMapZoomChanged() {
         //Log.d(TAG, "Map zoom changed");
         refresh();
+        mCallback.redrawStops();
     }
 
     @Override

@@ -47,6 +47,8 @@ public final class ObaStopElement implements ObaStop {
 
     private final String code;
 
+    private final String parent;
+
     private final String platformCode;
 
     private final String[] routeIds;
@@ -59,11 +61,12 @@ public final class ObaStopElement implements ObaStop {
         locationType = LOCATION_STOP;
         name = "";
         code = "";
+        parent = "";
         platformCode = "";
         routeIds = EMPTY_ROUTES;
     }
 
-    public ObaStopElement(String id, double lat, double lon, String name, String code, String platformCode) {
+    public ObaStopElement(String id, double lat, double lon, String name, String code, String parent, String platformCode) {
         this.id = id;
         this.lat = lat;
         this.lon = lon;
@@ -71,6 +74,7 @@ public final class ObaStopElement implements ObaStop {
         locationType = LOCATION_STOP;
         this.name = name;
         this.code = code;
+        this.parent = "";
         this.platformCode = platformCode;
         routeIds = EMPTY_ROUTES;
     }
@@ -86,6 +90,9 @@ public final class ObaStopElement implements ObaStop {
     public String getName() {
         return name;
     }
+
+    @Override
+    public String getParent() { return parent; }
 
     public String getPlatformCode() { return platformCode; }
 

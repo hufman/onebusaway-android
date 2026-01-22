@@ -916,11 +916,11 @@ public class TripDetailsListFragment extends ListFragment {
             ViewGroup occupancyView = convertView.findViewById(R.id.occupancy);
 
             TextView platformInfo = (TextView) convertView.findViewById(R.id.platform_info);
-            if (!stop.getPlatformCode().isEmpty()) {
+            if (stop.getPlatformCode() == null || stop.getPlatformCode().isEmpty()) {
+                platformInfo.setVisibility(View.GONE);
+            } else {
                 platformInfo.setVisibility(View.VISIBLE);
                 platformInfo.setText(stop.getPlatformCode());
-            } else {
-                platformInfo.setVisibility(View.GONE);
             }
 
             long date;

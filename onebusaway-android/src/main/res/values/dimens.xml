@@ -73,6 +73,8 @@
     <dimen name="trip_details_dest_stop_icon">18dp</dimen>
 
     <!-- Map -->
+    <dimen name="map_stop_dot_size">4dp</dimen>
+    <dimen name="map_stop_dot_size_fill">2dp</dimen>
     <dimen name="map_stop_icon_size">19dp</dimen>
     <dimen name="map_stop_icon_size_fill">15dp</dimen>
     <!-- Shadows, map stop icon -->

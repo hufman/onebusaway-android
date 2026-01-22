@@ -123,7 +123,7 @@ public class BaseMapFragment extends SupportMapFragment
         implements MapModeController.Callback, ObaRegionsTask.Callback,
         MapModeController.ObaMapView,
         LocationSource, LocationHelper.Listener,
-        com.google.android.gms.maps.GoogleMap.OnCameraChangeListener,
+        GoogleMap.OnCameraMoveListener,
         StopOverlay.OnFocusChangedListener, OnMapReadyCallback,
         VehicleOverlay.Controller, LayersSpeedDialAdapter.LayerActivationListener {
 
@@ -370,7 +370,7 @@ public class BaseMapFragment extends SupportMapFragment
         // Set location source
         mMap.setLocationSource(this);
         // Listener for camera changes
-        mMap.setOnCameraChangeListener(this);
+        mMap.setOnCameraMoveListener(this);
         // Hide MyLocation button on map, since we have our own button
         uiSettings.setMyLocationButtonEnabled(false);
         // Hide Toolbar
@@ -735,6 +735,13 @@ public class BaseMapFragment extends SupportMapFragment
             mStopOverlay.populateStops(stops, refs);
             // When we have stops that means we have a valid region to get the weather
             checkRegionWeather(false);
+        }
+    }
+
+    @Override
+    public void redrawStops() {
+        if (setupStopOverlay()) {
+            mStopOverlay.redrawStops();
         }
     }
 
@@ -1242,7 +1249,8 @@ public class BaseMapFragment extends SupportMapFragment
     @Override
     public boolean canWatchMapChanges() {
         // Android Map API v2 has an OnCameraChangeListener
-        return true;
+        // It doesn't work reliably though
+        return false;
     }
 
     /**
@@ -1261,7 +1269,7 @@ public class BaseMapFragment extends SupportMapFragment
     }
 
     @Override
-    public void onCameraChange(CameraPosition cameraPosition) {
+    public void onCameraMove() {
         Log.d(TAG, "onCameraChange");
         if (mControllers != null) {
             for (MapModeController controller : mControllers) {
