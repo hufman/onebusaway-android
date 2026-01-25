@@ -1816,6 +1816,58 @@ public final class ObaContract {
         }
 
         /**
+         * Returns true if this combination of routeId is a favorite for this stop
+         * or all stops (and that stop is not excluded as a favorite), false if it is not
+         *
+         * @param routeId  The routeId to check for favorite
+         * @param stopId The stopId to check for favorite
+         * @return true if this combination of routeId and headsign is a favorite for this stop
+         * or all stops (and that stop is not excluded as a favorite), false if it is not
+         */
+        public static boolean isFavorite(String routeId, String stopId) {
+            final String[] selection = {ROUTE_ID, STOP_ID, EXCLUDE};
+            final String[] selectionArgs = {routeId, stopId, Integer.toString(0)};
+            ContentResolver cr = Application.get().getContentResolver();
+            final String FILTER_WHERE_ALL_FIELDS = ROUTE_ID + "=? AND "
+                    + STOP_ID + "=? AND " + EXCLUDE + "=?";
+            Cursor c = cr.query(CONTENT_URI, selection, FILTER_WHERE_ALL_FIELDS,
+                    selectionArgs, null);
+            boolean favorite;
+            if (c != null && c.getCount() > 0) {
+                favorite = true;
+            } else {
+                // Check again to see if the user has favorited this route/headsign combo for all stops
+                final String[] selectionArgs2 = {routeId, ALL_STOPS};
+                String WHERE_PARTIAL = ROUTE_ID + "=? AND " + STOP_ID + "=?";
+                Cursor c2 = cr.query(CONTENT_URI, selection, WHERE_PARTIAL,
+                        selectionArgs2, null);
+                favorite = c2 != null && c2.getCount() > 0;
+                if (c2 != null) {
+                    c2.close();
+                }
+
+                if (favorite) {
+                    // Finally, make sure the user hasn't excluded this stop as a favorite
+                    final String[] selectionArgs3 = {routeId, stopId,
+                            Integer.toString(1)};
+                    Cursor c3 = cr.query(CONTENT_URI, selection, FILTER_WHERE_ALL_FIELDS,
+                            selectionArgs3, null);
+                    // If this query returns at least one record, it means the stop has been excluded as
+                    // a favorite (i.e., the user explicitly de-selected it)
+                    boolean isStopExcluded = c3 != null && c3.getCount() > 0;
+                    favorite = !isStopExcluded;
+                    if (c3 != null) {
+                        c3.close();
+                    }
+                }
+            }
+            if (c != null) {
+                c.close();
+            }
+            return favorite;
+        }
+
+        /**
          * Returns true if this routeId is listed as a favorite for at least one headsign with
          * EXCLUDED set to false, or false if it is not
          *

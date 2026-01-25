@@ -24,15 +24,19 @@ import org.onebusaway.android.io.elements.ObaStop;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
+import org.onebusaway.android.provider.ObaContract;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.ArrayMap;
 import android.util.Log;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.AsyncTaskLoader;
@@ -150,8 +154,12 @@ public class StopMapController extends BaseMapController implements
      */
     GoogleApiClient mGoogleApiClient;
 
+    private boolean mFirstStopLoad;
+
     public StopMapController(Callback callback) {
         super(callback);
+
+        mFirstStopLoad = true;
     }
 
     @Override
@@ -248,6 +256,15 @@ public class StopMapController extends BaseMapController implements
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
         mCallback.showStops(stops, response);
+
+        if (mFirstStopLoad) {
+            mFirstStopLoad = false;
+
+            ObaStop preselectedStop = determinePreselectedStop(_response.getRequest().getCenter(), stops);
+            if (preselectedStop != null) {
+                mCallback.setFocusStop(preselectedStop);
+            }
+        }
     }
 
     @Override
@@ -263,6 +280,24 @@ public class StopMapController extends BaseMapController implements
         onLoadFinished(loader, response);
     }
 
+    private ObaStop determinePreselectedStop(Location center, List<ObaStop> stops) {
+        Map<ObaStop, Float> distanceFromCenter = new ArrayMap<>(stops.size());
+        for (ObaStop stop : stops) {
+            distanceFromCenter.put(stop, center.distanceTo(stop.getLocation()));
+        }
+
+        Collections.sort(stops, (a, b) -> distanceFromCenter.get(a).compareTo(distanceFromCenter.get(b)));
+
+        for (ObaStop stop : stops) {
+            for (String routeId : stop.getRouteIds()) {
+                if (ObaContract.RouteHeadsignFavorites.isFavorite(routeId, stop.getId())) {
+                    return stop;
+                }
+            }
+        }
+
+        return null;
+    }
 
     //
     // Loader

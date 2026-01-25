@@ -69,6 +69,8 @@ public interface MapModeController {
 
         void redrawStops();
 
+        void setFocusStop(ObaStop stop);
+
         void showBikeStations(List<BikeRentalStation> bikeStations);
 
         void clearBikeStations();

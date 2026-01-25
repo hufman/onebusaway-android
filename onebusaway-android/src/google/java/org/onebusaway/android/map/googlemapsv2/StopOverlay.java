@@ -660,6 +660,10 @@ public class StopOverlay implements MarkerListeners {
         return null;
     }
 
+    public void setFocus(ObaStop stop) {
+        doFocusChange(stop);
+    }
+
     /**
      * Sets focus to a particular stop, or pass in null for the stop to clear the focus
      *

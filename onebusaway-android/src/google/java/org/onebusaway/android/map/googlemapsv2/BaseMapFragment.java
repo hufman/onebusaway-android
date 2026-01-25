@@ -1253,6 +1253,10 @@ public class BaseMapFragment extends SupportMapFragment
         return false;
     }
 
+    public void setFocusStop(ObaStop stop) {
+        mStopOverlay.setFocus(stop);
+    }
+
     /**
      * Sets focus to a particular stop, or pass in null for the stop to clear the focus
      *
