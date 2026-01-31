@@ -54,7 +54,6 @@ import android.view.animation.Interpolator;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -115,21 +114,7 @@ public class StopOverlay implements MarkerListeners {
     private static final Bitmap[] general_stop_icons_large = new Bitmap[NUM_DIRECTIONS];
 
     private static final Bitmap[] general_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
-    private static final Bitmap[] bus_stop_icons_large = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] bus_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] subway_stop_icons_large = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] subway_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] tram_stop_icons_large = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] tram_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] rail_stop_icons_large = new Bitmap[NUM_DIRECTIONS];
-
-    private static final Bitmap[] rail_stop_icons_focused = new Bitmap[NUM_DIRECTIONS];
+    private static final Bitmap[] transit_mode_icons = new Bitmap[ObaRoute.NUM_TYPES];
 
     private static final float FOCUS_ICON_SCALE = 1.5f;
 
@@ -232,7 +217,11 @@ public class StopOverlay implements MarkerListeners {
         if (mMarkerData == null) return;
         for (Marker existingMarker : mMarkerData.mStopMarkers.values()) {
             ObaStop existingStop = mMarkerData.mStops.get(existingMarker);
-            mMarkerData.updateMarkerIcon(existingStop, existingMarker);
+            if (existingStop != null) {
+                mMarkerData.updateMarkerIcon(existingStop, existingMarker);
+                Marker existingModeMarker = mMarkerData.mStopModeMarkers.get(existingStop.getId());
+                mMarkerData.updateMarkerModeIcon(existingStop, existingModeMarker);
+            }
         }
     }
 
@@ -285,16 +274,8 @@ public class StopOverlay implements MarkerListeners {
 
         String[] directions = {NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, EAST, NORTH_EAST, NO_DIRECTION};
         for (int i = 0; i < directions.length; i++) {
-            general_stop_icons[i] = createStopIcon(directions[i], false, 0);
-            general_stop_icons_focused[i] = createStopIcon(directions[i], true, 0);
-            bus_stop_icons_large[i] = createStopIcon(directions[i], false, R.drawable.ic_bus);
-            bus_stop_icons_focused[i] = createStopIcon(directions[i], true, R.drawable.ic_bus);
-            subway_stop_icons_large[i] = createStopIcon(directions[i], false, R.drawable.ic_subway);
-            subway_stop_icons_focused[i] = createStopIcon(directions[i], true, R.drawable.ic_subway);
-            tram_stop_icons_large[i] = createStopIcon(directions[i], false, R.drawable.ic_tram);
-            tram_stop_icons_focused[i] = createStopIcon(directions[i], true, R.drawable.ic_tram);
-            rail_stop_icons_large[i] = createStopIcon(directions[i], false, R.drawable.ic_train);
-            rail_stop_icons_focused[i] = createStopIcon(directions[i], true, R.drawable.ic_train);
+            general_stop_icons[i] = createStopIcon(directions[i], false);
+            general_stop_icons_focused[i] = createStopIcon(directions[i], true);
         }
         // Scale the focused icons to be larger than the normal icons
         for (int i = 0; i < NUM_DIRECTIONS; i++) {
@@ -306,40 +287,13 @@ public class StopOverlay implements MarkerListeners {
             general_stop_icons_focused[i] = Bitmap.createScaledBitmap(focused,
                     (int) (focused.getWidth() * FOCUS_ICON_SCALE),
                     (int) (focused.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap bus = bus_stop_icons_large[i];
-            bus_stop_icons_large[i] = Bitmap.createScaledBitmap(bus,
-                    (int) (bus.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (bus.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap busFocused = bus_stop_icons_focused[i];
-            bus_stop_icons_focused[i] = Bitmap.createScaledBitmap(busFocused,
-                    (int) (busFocused.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (busFocused.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap subway = subway_stop_icons_large[i];
-            subway_stop_icons_large[i] = Bitmap.createScaledBitmap(subway,
-                    (int) (subway.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (subway.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap subwayFocused = subway_stop_icons_focused[i];
-            subway_stop_icons_focused[i] = Bitmap.createScaledBitmap(subwayFocused,
-                    (int) (subwayFocused.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (subwayFocused.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap tram = tram_stop_icons_large[i];
-            tram_stop_icons_large[i] = Bitmap.createScaledBitmap(tram,
-                    (int) (tram.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (tram.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap tramFocused = tram_stop_icons_focused[i];
-            tram_stop_icons_focused[i] = Bitmap.createScaledBitmap(tramFocused,
-                    (int) (tramFocused.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (tramFocused.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap rail = rail_stop_icons_large[i];
-            rail_stop_icons_large[i] = Bitmap.createScaledBitmap(rail,
-                    (int) (rail.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (rail.getHeight() * FOCUS_ICON_SCALE), true);
-            Bitmap railFocused = rail_stop_icons_focused[i];
-            rail_stop_icons_focused[i] = Bitmap.createScaledBitmap(railFocused,
-                    (int) (railFocused.getWidth() * FOCUS_ICON_SCALE),
-                    (int) (railFocused.getHeight() * FOCUS_ICON_SCALE), true);
         }
         general_stop_dot = createGeneralStopDot();
+        transit_mode_icons[ObaRoute.TYPE_TRAM] = createModeIcon(R.drawable.ic_tram);
+        transit_mode_icons[ObaRoute.TYPE_SUBWAY] = createModeIcon(R.drawable.ic_subway);
+        transit_mode_icons[ObaRoute.TYPE_RAIL] = createModeIcon(R.drawable.ic_train);
+        transit_mode_icons[ObaRoute.TYPE_BUS] = createModeIcon(R.drawable.ic_bus);
+        transit_mode_icons[ObaRoute.TYPE_FERRY] = createModeIcon(R.drawable.ic_ferry);
     }
 
     private static Bitmap createGeneralStopDot() throws NullPointerException {
@@ -355,8 +309,10 @@ public class StopOverlay implements MarkerListeners {
         bm = Bitmap.createBitmap(dotSize, dotSize, Bitmap.Config.ARGB_8888);
         c = new Canvas(bm);
         shape = ContextCompat.getDrawable(context, R.drawable.map_stop_dot);
-        shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
-        shape.draw(c);
+        if (shape != null) {
+            shape.setBounds(0, 0, bm.getWidth(), bm.getHeight());
+            shape.draw(c);
+        }
 
         return bm;
     }
@@ -372,7 +328,7 @@ public class StopOverlay implements MarkerListeners {
      * if direction is NO_DIRECTION
      */
     private static Bitmap createStopIcon(String direction) throws NullPointerException {
-        return createStopIcon(direction, false, 0);
+        return createStopIcon(direction, false);
     }
 
     /**
@@ -386,7 +342,7 @@ public class StopOverlay implements MarkerListeners {
      * @return a bus stop icon bitmap with the arrow pointing the given direction, or with no arrow
      * if direction is NO_DIRECTION
      */
-    private static Bitmap createStopIcon(String direction, boolean selected, int modeOverlayId) throws NullPointerException {
+    private static Bitmap createStopIcon(String direction, boolean selected) throws NullPointerException {
         if (direction == null) {
             throw new IllegalArgumentException(direction);
         }
@@ -528,17 +484,6 @@ public class StopOverlay implements MarkerListeners {
 
         shape.draw(c);
 
-        if (modeOverlayId > 0) {
-            Rect modeBounds = new Rect(shape.getBounds());
-            modeBounds.inset(8, 8);
-            Drawable overlay = ContextCompat.getDrawable(context, modeOverlayId);
-            if (overlay != null) {
-                Rect drawableBounds = new Rect(0, 0, overlay.getIntrinsicWidth(), overlay.getIntrinsicHeight());
-                overlay.setBounds(fitRectInsideRect(drawableBounds, modeBounds));
-                overlay.draw(c);
-            }
-        }
-
         if (direction.equals(NO_DIRECTION)) {
             // Everything after this point is for drawing the arrow image, so return the bitmap as-is for no arrow
             return bm;
@@ -632,6 +577,31 @@ public class StopOverlay implements MarkerListeners {
         }
 
         return src;
+    }
+
+    private static Bitmap createModeIcon(int iconId) {
+        Resources r = Application.get().getResources();
+        Context context = Application.get();
+
+        Bitmap bm;
+        Canvas c;
+        Drawable icon;
+
+        int iconSize = (int)(mPx * FOCUS_ICON_SCALE);
+
+        bm = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
+        c = new Canvas(bm);
+        icon = ContextCompat.getDrawable(context, iconId);
+
+        if (icon != null) {
+            Rect iconBounds = new Rect(0, 0, iconSize, iconSize);
+            iconBounds.inset(8, 8);
+            Rect drawableBounds = new Rect(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+            icon.setBounds(fitRectInsideRect(drawableBounds, iconBounds));
+            icon.draw(c);
+        }
+
+        return bm;
     }
 
     /**
@@ -852,6 +822,13 @@ public class StopOverlay implements MarkerListeners {
         private HashMap<String, Marker> mStopMarkers;
 
         /**
+         * A cached set of mode markers currently shown on the map, up to roughly
+         * FUZZY_MAX_MARKER_COUNT in size.  This is needed to add/remove markers from the map.
+         * StopId is the key.
+         */
+        private HashMap<String, Marker> mStopModeMarkers;
+
+        /**
          * A cached set of ObaStops that are currently shown on the map, up to roughly
          * FUZZY_MAX_MARKER_COUNT in size.  Since onMarkerClick() provides a marker, we need a
          * mapping of that marker to the ObaStop.
@@ -871,6 +848,7 @@ public class StopOverlay implements MarkerListeners {
          * clicked/tapped). The marker reference points to the stop marker itself.
          */
         private Marker mCurrentFocusMarker;
+        private Marker mCurrentFocusModeMarker;
 
         private ObaStop mCurrentFocusStop;
 
@@ -882,6 +860,7 @@ public class StopOverlay implements MarkerListeners {
 
         MarkerData() {
             mStopMarkers = new HashMap<String, Marker>();
+            mStopModeMarkers = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
             mStopRoutes = new HashMap<String, ObaRoute>();
             mFocusedRoutes = new LinkedList<ObaRoute>();
@@ -896,6 +875,7 @@ public class StopOverlay implements MarkerListeners {
                         + ", clearing cache");
                 removeMarkersFromMap();
                 mStopMarkers.clear();
+                mStopModeMarkers.clear();
                 mStops.clear();
 
                 // Make sure the currently focused stop still exists on the map
@@ -911,8 +891,13 @@ public class StopOverlay implements MarkerListeners {
                 if (existingMarker == null) {
                     addMarkerToMap(stop, routes);
                     count++;
-                } else {
+                } else if (existingMarker != mCurrentFocusMarker) {
                     updateMarkerIcon(stop, existingMarker);
+                }
+
+                Marker existingModeMarker = mStopModeMarkers.get(stop.getId());
+                if (existingModeMarker != null) {
+                    updateMarkerModeIcon(stop, existingModeMarker);
                 }
             }
 
@@ -933,6 +918,13 @@ public class StopOverlay implements MarkerListeners {
                 }
             }
 
+            // Stations are lifted above stops
+            float zIndexStop = 0.1f / Math.abs(stop.getId().hashCode());
+            boolean isStation = stop.getParent() != null && stop.getParent().isEmpty();
+            if (isStation) {
+                zIndexStop += 0.5f;
+            }
+
             // Determine icon within synchronized block to prevent race condition with focus changes
             BitmapDescriptor icon = getMarkerIcon(stop);
 
@@ -940,11 +932,22 @@ public class StopOverlay implements MarkerListeners {
                     .position(MapHelpV2.makeLatLng(stop.getLocation()))
                     .icon(icon)
                     .flat(true)
+                    .zIndex(zIndexStop)
                     .anchor(getXPercentOffsetForDirection(stop.getDirection()),
                             getYPercentOffsetForDirection(stop.getDirection()))
             );
             mStopMarkers.put(stop.getId(), m);
             mStops.put(m, stop);
+
+            BitmapDescriptor iconMode = getMarkerModeIcon(stop);
+            Marker mMode = mMap.addMarker(new MarkerOptions()
+                    .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                    .icon(iconMode)
+                    .zIndex(0.1f + zIndexStop)
+                    .anchor(0.5f, 0.5f)
+            );
+            mStopModeMarkers.put(stop.getId(), mMode);
+            mStops.put(mMode, stop);
         }
 
         private void updateMarkerIcon(ObaStop stop, Marker m) {
@@ -953,10 +956,37 @@ public class StopOverlay implements MarkerListeners {
                         getYPercentOffsetForDirection(stop.getDirection()));
         }
 
+        private void updateMarkerModeIcon(ObaStop stop, Marker m) {
+            boolean isFocused = mCurrentFocusStop != null && stop.getId().equals(mCurrentFocusStop.getId());
+            if (isFocused) {
+                m.setVisible(false);
+            } else {
+                m.setVisible(mMap.getCameraPosition().zoom > ICON_LARGE_ZOOM_LEVEL);
+            }
+        }
+
         private BitmapDescriptor getMarkerIcon(ObaStop stop) {
             boolean isFocused = mCurrentFocusStop != null && stop.getId().equals(mCurrentFocusStop.getId());
             Bitmap[] icons;
 
+            if (mMap.getCameraPosition().zoom > ICON_LARGE_ZOOM_LEVEL) {
+                icons = isFocused ? general_stop_icons_focused : general_stop_icons_large;
+                return getBitmapDescriptorForStopDirection(icons, stop.getDirection());
+            } else if (mMap.getCameraPosition().zoom > ICON_ZOOM_LEVEL) {
+                icons = isFocused ? general_stop_icons_focused : general_stop_icons;
+                return getBitmapDescriptorForStopDirection(icons, stop.getDirection());
+            } else if (stop.getParent() != null && stop.getParent().isEmpty()) {
+                // Station, never show small dot
+                icons = isFocused ? general_stop_icons_focused : general_stop_icons;
+                return getBitmapDescriptorForStopDirection(icons, stop.getDirection());
+            } else if (isFocused) {
+                return getBitmapDescriptorForStopDirection(general_stop_icons_focused, stop.getDirection());
+            } else {
+                return BitmapDescriptorFactory.fromBitmap(general_stop_dot);
+            }
+        }
+
+        private BitmapDescriptor getMarkerModeIcon(ObaStop stop) {
             List<ObaRoute> routes = new ArrayList<>(stop.getRouteIds().length);
             for (String routeId : stop.getRouteIds()) {
                 if (mStopRoutes.containsKey(routeId)) {
@@ -964,29 +994,18 @@ public class StopOverlay implements MarkerListeners {
                 }
             }
             Set<Integer> routeTypes = getRouteTypes(routes);
-
-            if (mMap.getCameraPosition().zoom > ICON_LARGE_ZOOM_LEVEL) {
-                if (routeTypes.contains(ObaRoute.TYPE_RAIL)) {
-                    icons = isFocused ? rail_stop_icons_focused : rail_stop_icons_large;
-                } else if (routeTypes.contains(ObaRoute.TYPE_SUBWAY)) {
-                    icons = isFocused ? subway_stop_icons_focused : subway_stop_icons_large;
-                } else if (routeTypes.contains(ObaRoute.TYPE_TRAM)) {
-                    icons = isFocused ? tram_stop_icons_focused : tram_stop_icons_large;
-                } else if (routeTypes.contains(ObaRoute.TYPE_BUS)) {
-                    icons = isFocused ? bus_stop_icons_focused : bus_stop_icons_large;
-                } else {
-                    icons = isFocused ? general_stop_icons_focused : general_stop_icons_large;
-                }
-                return getBitmapDescriptorForStopDirection(icons, stop.getDirection());
-            } else if (mMap.getCameraPosition().zoom > ICON_ZOOM_LEVEL) {
-                icons = isFocused ? general_stop_icons_focused : general_stop_icons;
-                return getBitmapDescriptorForStopDirection(icons, stop.getDirection());
-            } else if (stop.getParent() != null && stop.getParent().isEmpty()) {
-                // Station, never show dot
-                icons = isFocused ? general_stop_icons_focused : general_stop_icons;
-                return getBitmapDescriptorForStopDirection(icons, stop.getDirection());
+            if (routeTypes.contains(ObaRoute.TYPE_RAIL)) {
+                return BitmapDescriptorFactory.fromBitmap(transit_mode_icons[ObaRoute.TYPE_RAIL]);
+            } else if (routeTypes.contains(ObaRoute.TYPE_SUBWAY)) {
+                return BitmapDescriptorFactory.fromBitmap(transit_mode_icons[ObaRoute.TYPE_SUBWAY]);
+            } else if (routeTypes.contains(ObaRoute.TYPE_TRAM)) {
+                return BitmapDescriptorFactory.fromBitmap(transit_mode_icons[ObaRoute.TYPE_TRAM]);
+            } else if (routeTypes.contains(ObaRoute.TYPE_BUS)) {
+                return BitmapDescriptorFactory.fromBitmap(transit_mode_icons[ObaRoute.TYPE_BUS]);
+            } else if (routeTypes.contains(ObaRoute.TYPE_FERRY)) {
+                return BitmapDescriptorFactory.fromBitmap(transit_mode_icons[ObaRoute.TYPE_FERRY]);
             } else {
-                return BitmapDescriptorFactory.fromBitmap(general_stop_dot);
+                return null;
             }
         }
 
@@ -1054,15 +1073,22 @@ public class StopOverlay implements MarkerListeners {
 
             if (mCurrentFocusMarker != null && mCurrentFocusStop != null) {
                 // Get the current marker from cache in case the old reference is stale
-                Marker currentMarker = mStopMarkers.get(mCurrentFocusStop.getId());
+                ObaStop previousFocusStop = mCurrentFocusStop;
+                Marker currentMarker = mStopMarkers.get(previousFocusStop.getId());
+                Marker currentModeMarker = mStopModeMarkers.get(previousFocusStop.getId());
+
+                // Restore previous marker icon
+                mCurrentFocusStop = null;
                 if (currentMarker != null) {
-                    // Restore previous marker icon
-                    currentMarker.setIcon(getBitmapDescriptorForBusStopDirection(
-                            mCurrentFocusStop.getDirection()));
+                    updateMarkerIcon(previousFocusStop, currentMarker);
+                }
+                if (currentModeMarker != null) {
+                    updateMarkerModeIcon(previousFocusStop, currentModeMarker);
                 }
             }
             mCurrentFocusStop = stop;
             mCurrentFocusMarker = mStopMarkers.get(stop.getId());
+            mCurrentFocusModeMarker = mStopModeMarkers.get(stop.getId());
 
             // Check if the marker exists in our cache before proceeding
             if (mCurrentFocusMarker == null) {
@@ -1080,8 +1106,9 @@ public class StopOverlay implements MarkerListeners {
                 }
             }
 
-            mCurrentFocusMarker.setIcon(
-                    getFocusedBitmapDescriptorForBusStopDirection(stop.getDirection()));
+
+            updateMarkerIcon(stop, mCurrentFocusMarker);
+            updateMarkerModeIcon(stop, mCurrentFocusModeMarker);
         }
 
         /**
@@ -1150,6 +1177,9 @@ public class StopOverlay implements MarkerListeners {
             for (Map.Entry<String, Marker> entry : mStopMarkers.entrySet()) {
                 entry.getValue().remove();
             }
+            for (Map.Entry<String, Marker> entry : mStopModeMarkers.entrySet()) {
+                entry.getValue().remove();
+            }
         }
 
         /**
@@ -1164,6 +1194,7 @@ public class StopOverlay implements MarkerListeners {
 
                 // Clear the data structures
                 mStopMarkers.clear();
+                mStopModeMarkers.clear();
             }
             if (mStops != null) {
                 mStops.clear();
