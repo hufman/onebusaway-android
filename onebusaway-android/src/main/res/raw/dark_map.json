@@ -196,5 +196,23 @@
         "lightness": -20
       }
     ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "all",
+    "stylers": [
+      {
+        "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station",
+    "elementType": "all",
+    "stylers": [
+      {
+        "visibility":"off"
+      }
+    ]
   }
 ]
