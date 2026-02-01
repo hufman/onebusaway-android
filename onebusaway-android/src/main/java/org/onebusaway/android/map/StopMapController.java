@@ -283,7 +283,11 @@ public class StopMapController extends BaseMapController implements
     private ObaStop determinePreselectedStop(Location center, List<ObaStop> stops) {
         Map<ObaStop, Float> distanceFromCenter = new ArrayMap<>(stops.size());
         for (ObaStop stop : stops) {
-            distanceFromCenter.put(stop, center.distanceTo(stop.getLocation()));
+            if (stop.getParent() == null || stop.getParent().isEmpty()) {
+                distanceFromCenter.put(stop, center.distanceTo(stop.getLocation()) / 4);
+            } else {
+                distanceFromCenter.put(stop, center.distanceTo(stop.getLocation()));
+            }
         }
 
         Collections.sort(stops, (a, b) -> distanceFromCenter.get(a).compareTo(distanceFromCenter.get(b)));
