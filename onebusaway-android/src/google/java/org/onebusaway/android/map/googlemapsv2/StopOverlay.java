@@ -43,14 +43,18 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -63,6 +67,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 
 public class StopOverlay implements MarkerListeners {
@@ -121,6 +126,8 @@ public class StopOverlay implements MarkerListeners {
     private static final float ICON_LARGE_ZOOM_LEVEL = 17f;
 
     private static final float ICON_ZOOM_LEVEL = 16f;
+
+    private static final float STATION_LABEL_ZOOM_LEVEL = 14f;
 
     private static int mPx; // Bus stop icon size
 
@@ -220,7 +227,13 @@ public class StopOverlay implements MarkerListeners {
             if (existingStop != null) {
                 mMarkerData.updateMarkerIcon(existingStop, existingMarker);
                 Marker existingModeMarker = mMarkerData.mStopModeMarkers.get(existingStop.getId());
-                mMarkerData.updateMarkerModeIcon(existingStop, existingModeMarker);
+                if (existingModeMarker != null) {
+                    mMarkerData.updateMarkerModeIcon(existingStop, existingModeMarker);
+                }
+                Marker existingLabel = mMarkerData.mStopLabels.get(existingStop.getId());
+                if (existingLabel != null) {
+                    mMarkerData.updateMarkerLabel(existingLabel);
+                }
             }
         }
     }
@@ -829,6 +842,13 @@ public class StopOverlay implements MarkerListeners {
         private HashMap<String, Marker> mStopModeMarkers;
 
         /**
+         * A cached set of labels currently shown on the map, up to roughly
+         * FUZZY_MAX_MARKER_COUNT in size.  This is needed to add/remove markers from the map.
+         * StopId is the key.
+         */
+        private HashMap<String, Marker> mStopLabels;
+
+        /**
          * A cached set of ObaStops that are currently shown on the map, up to roughly
          * FUZZY_MAX_MARKER_COUNT in size.  Since onMarkerClick() provides a marker, we need a
          * mapping of that marker to the ObaStop.
@@ -861,6 +881,7 @@ public class StopOverlay implements MarkerListeners {
         MarkerData() {
             mStopMarkers = new HashMap<String, Marker>();
             mStopModeMarkers = new HashMap<String, Marker>();
+            mStopLabels = new HashMap<String, Marker>();
             mStops = new HashMap<Marker, ObaStop>();
             mStopRoutes = new HashMap<String, ObaRoute>();
             mFocusedRoutes = new LinkedList<ObaRoute>();
@@ -876,6 +897,7 @@ public class StopOverlay implements MarkerListeners {
                 removeMarkersFromMap();
                 mStopMarkers.clear();
                 mStopModeMarkers.clear();
+                mStopLabels.clear();
                 mStops.clear();
 
                 // Make sure the currently focused stop still exists on the map
@@ -899,6 +921,11 @@ public class StopOverlay implements MarkerListeners {
                 if (existingModeMarker != null) {
                     updateMarkerModeIcon(stop, existingModeMarker);
                 }
+
+                Marker existingLabel = mStopLabels.get(stop.getId());
+                if (existingLabel != null) {
+                    updateMarkerLabel(existingLabel);
+                }
             }
 
             Log.d(TAG, "Added " + count + " markers, total markers = " + mStopMarkers.size());
@@ -918,11 +945,18 @@ public class StopOverlay implements MarkerListeners {
                 }
             }
 
+            float ZINDEX_RANGE = 0.1f;
+            float ZINDEX_CIRCLE = 1.0f;
+            float ZINDEX_MODE = 1.2f;
+            float ZINDEX_STATION_RAISE = 0.5f;
+            float ZINDEX_PLATFORM_LABEL = 0.7f;
+            float ZINDEX_STATION_LABEL = 0.1f;
+
             // Stations are lifted above stops
-            float zIndexStop = 0.1f / Math.abs(stop.getId().hashCode());
+            float zIndexStop = ZINDEX_RANGE / Math.abs(stop.getId().hashCode());
             boolean isStation = stop.getParent() != null && stop.getParent().isEmpty();
             if (isStation) {
-                zIndexStop += 0.5f;
+                zIndexStop += ZINDEX_STATION_RAISE;
             }
 
             // Determine icon within synchronized block to prevent race condition with focus changes
@@ -932,7 +966,7 @@ public class StopOverlay implements MarkerListeners {
                     .position(MapHelpV2.makeLatLng(stop.getLocation()))
                     .icon(icon)
                     .flat(true)
-                    .zIndex(zIndexStop)
+                    .zIndex(ZINDEX_CIRCLE + zIndexStop)
                     .anchor(getXPercentOffsetForDirection(stop.getDirection()),
                             getYPercentOffsetForDirection(stop.getDirection()))
             );
@@ -943,11 +977,31 @@ public class StopOverlay implements MarkerListeners {
             Marker mMode = mMap.addMarker(new MarkerOptions()
                     .position(MapHelpV2.makeLatLng(stop.getLocation()))
                     .icon(iconMode)
-                    .zIndex(0.1f + zIndexStop)
+                    .zIndex(ZINDEX_MODE + zIndexStop)
                     .anchor(0.5f, 0.5f)
             );
             mStopModeMarkers.put(stop.getId(), mMode);
             mStops.put(mMode, stop);
+
+            if (stop.getPlatformCode() != null && !stop.getPlatformCode().isEmpty()) {
+                Marker label = mMap.addMarker(new MarkerOptions()
+                    .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                    .icon(getMarkerPlatformLabel(stop.getPlatformCode()))
+                    .zIndex(ZINDEX_PLATFORM_LABEL + zIndexStop)
+                    .anchor(0.5f, 1f)
+                );
+                mStopLabels.put(stop.getId(), label);
+                mStops.put(label, stop);
+            } else if (stop.getParent() == null || stop.getParent().isEmpty()) {
+                Marker label = mMap.addMarker(new MarkerOptions()
+                        .position(MapHelpV2.makeLatLng(stop.getLocation()))
+                        .icon(getMarkerStationLabel(stop.getName()))
+                        .zIndex(ZINDEX_STATION_LABEL + zIndexStop)
+                        .anchor(0.5f, 1f)
+                );
+                mStopLabels.put(stop.getId(), label);
+                mStops.put(label, stop);
+            }
         }
 
         private void updateMarkerIcon(ObaStop stop, Marker m) {
@@ -962,6 +1016,15 @@ public class StopOverlay implements MarkerListeners {
                 m.setVisible(false);
             } else {
                 m.setVisible(mMap.getCameraPosition().zoom > ICON_LARGE_ZOOM_LEVEL);
+            }
+        }
+
+        private void updateMarkerLabel(Marker m) {
+            if (m.getZIndex() < 0.7f) {
+                // Station label
+                m.setVisible(mMap.getCameraPosition().zoom > STATION_LABEL_ZOOM_LEVEL);
+            } else {
+                m.setVisible(mMap.getCameraPosition().zoom > ICON_ZOOM_LEVEL);
             }
         }
 
@@ -1016,6 +1079,49 @@ public class StopOverlay implements MarkerListeners {
             }
 
             return routeTypes;
+        }
+
+        private BitmapDescriptor getMarkerPlatformLabel(String platformCode)
+        {
+            final float scale = Application.get().getResources().getDisplayMetrics().density;
+            int size = (int)(24 * scale + 0.5f);
+
+            Bitmap bitmap = Bitmap.createBitmap(size, size * 2, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+
+            TextView labelView = new TextView(Application.get());
+            labelView.setText(platformCode);
+            labelView.layout(0, 0, size, size);
+            labelView.setGravity(Gravity.CENTER);
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+            labelView.setTypeface(Typeface.DEFAULT_BOLD);
+            labelView.setBackground(AppCompatResources.getDrawable(Application.get(), R.drawable.border_platform_info));
+
+            canvas.save();
+            labelView.draw(canvas);
+            canvas.restore();
+
+            return BitmapDescriptorFactory.fromBitmap(bitmap);
+        }
+
+        private BitmapDescriptor getMarkerStationLabel(String name)
+        {
+            TextView labelView = new TextView(Application.get());
+            labelView.setText(name);
+            labelView.setGravity(Gravity.CENTER);
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
+            labelView.setTypeface(Typeface.DEFAULT_BOLD);
+            float width = labelView.getPaint().measureText(name);
+            labelView.layout(0, 0, (int)width, 50);
+
+            Bitmap bitmap = Bitmap.createBitmap((int)width, 50 * 2, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+
+            canvas.save();
+            labelView.draw(canvas);
+            canvas.restore();
+
+            return BitmapDescriptorFactory.fromBitmap(bitmap);
         }
 
         synchronized ObaStop getStopFromMarker(Marker marker) {
@@ -1180,6 +1286,9 @@ public class StopOverlay implements MarkerListeners {
             for (Map.Entry<String, Marker> entry : mStopModeMarkers.entrySet()) {
                 entry.getValue().remove();
             }
+            for (Map.Entry<String, Marker> entry : mStopLabels.entrySet()) {
+                entry.getValue().remove();
+            }
         }
 
         /**
@@ -1195,6 +1304,7 @@ public class StopOverlay implements MarkerListeners {
                 // Clear the data structures
                 mStopMarkers.clear();
                 mStopModeMarkers.clear();
+                mStopLabels.clear();
             }
             if (mStops != null) {
                 mStops.clear();
