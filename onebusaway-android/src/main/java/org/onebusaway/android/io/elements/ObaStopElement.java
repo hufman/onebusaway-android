@@ -19,6 +19,8 @@ import org.onebusaway.android.util.LocationUtils;
 
 import android.location.Location;
 
+import java.util.Arrays;
+
 /**
  * Object defining a Stop element.
  * {@link http://code.google.com/p/onebusaway/wiki/OneBusAwayRestApi_StopElementV2}
@@ -51,7 +53,7 @@ public final class ObaStopElement implements ObaStop {
 
     private final String platformCode;
 
-    private final String[] routeIds;
+    private String[] routeIds;
 
     public ObaStopElement() {
         id = "";
@@ -66,17 +68,21 @@ public final class ObaStopElement implements ObaStop {
         routeIds = EMPTY_ROUTES;
     }
 
-    public ObaStopElement(String id, double lat, double lon, String name, String code, String parent, String platformCode) {
+    public ObaStopElement(String id, double lat, double lon, String direction, String name, String code, String parent, String platformCode) {
         this.id = id;
         this.lat = lat;
         this.lon = lon;
-        direction = "";
+        this.direction = direction;
         locationType = LOCATION_STOP;
         this.name = name;
         this.code = code;
-        this.parent = "";
+        this.parent = parent;
         this.platformCode = platformCode;
         routeIds = EMPTY_ROUTES;
+    }
+
+    public void setRouteIds(String[] routeIds) {
+        this.routeIds = routeIds;
     }
 
     public String getId() {
@@ -153,6 +159,6 @@ public final class ObaStopElement implements ObaStop {
     @Override
     public String toString() {
         return "ObaStopElement [direction=" + direction + ", id=" + id
-                + ", name=" + name + "]";
+                + ", name=" + name + ", parent=" + parent + ", platformCode=" + platformCode + ", routes=" + Arrays.asList(routeIds) + "]";
     }
 }

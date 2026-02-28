@@ -20,11 +20,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.io.ObaApi;
+import org.onebusaway.android.io.elements.ObaReferences;
+import org.onebusaway.android.io.elements.ObaRoute;
 import org.onebusaway.android.io.elements.ObaStop;
+import org.onebusaway.android.io.elements.ObaStopsForLocationCacheResponse;
+import org.onebusaway.android.io.request.ObaStopsForLocationInterface;
 import org.onebusaway.android.io.request.ObaStopsForLocationRequest;
 import org.onebusaway.android.io.request.ObaStopsForLocationResponse;
 import org.onebusaway.android.map.googlemapsv2.BaseMapFragment;
 import org.onebusaway.android.provider.ObaContract;
+import org.onebusaway.android.util.DBUtil;
 import org.onebusaway.android.util.RegionUtils;
 
 import android.location.Location;
@@ -80,9 +85,9 @@ final class StopsResponse {
 
     private final StopsRequest mRequest;
 
-    private final ObaStopsForLocationResponse mResponse;
+    private final ObaStopsForLocationInterface mResponse;
 
-    StopsResponse(StopsRequest req, ObaStopsForLocationResponse response) {
+    StopsResponse(StopsRequest req, ObaStopsForLocationInterface response) {
         mRequest = req;
         mResponse = response;
     }
@@ -91,7 +96,7 @@ final class StopsResponse {
         return mRequest;
     }
 
-    ObaStopsForLocationResponse getResponse() {
+    ObaStopsForLocationInterface getResponse() {
         return mResponse;
     }
 
@@ -142,10 +147,14 @@ public class StopMapController extends BaseMapController implements
     private static final String TAG = "StopMapController";
 
     private static final int STOPS_LOADER = 5678;
+    private static final int STOPS_CACHE_LOADER = 5679;
 
     // In lieu of using an actual LoaderManager, which isn't
     // available in SherlockMapActivity
     private Loader<StopsResponse> mLoader;
+
+    // In lieu of using an actual LoaderManager
+    private Loader<StopsResponse> mCacheLoader;
 
     private MapWatcher mMapWatcher;
 
@@ -167,6 +176,9 @@ public class StopMapController extends BaseMapController implements
         mLoader = onCreateLoader(STOPS_LOADER, null);
         mLoader.registerListener(0, this);
         mLoader.startLoading();
+        mCacheLoader = onCreateCacheLoader(STOPS_CACHE_LOADER, null);
+        mCacheLoader.registerListener(0, this);
+        mCacheLoader.startLoading();
     }
 
     @Override
@@ -192,6 +204,13 @@ public class StopMapController extends BaseMapController implements
         return loader;
     }
 
+    public Loader<StopsResponse> onCreateCacheLoader(int id, Bundle args) {
+        StopsCacheLoader loader = new StopsCacheLoader(mCallback);
+        StopsRequest req = new StopsRequest(mCallback.getMapView());
+        loader.update(req);
+        return loader;
+    }
+
     protected StopsLoader getLoader() {
         //Loader<ObaStopsForLocationResponse> l =
         //        mCallback.getLoaderManager().getLoader(STOPS_LOADER);
@@ -199,8 +218,20 @@ public class StopMapController extends BaseMapController implements
         return (StopsLoader) mLoader;
     }
 
+    protected StopsCacheLoader getCacheLoader() {
+        //Loader<ObaStopsForLocationResponse> l =
+        //        mCallback.getLoaderManager().getLoader(STOPS_LOADER);
+        //return (StopsLoader)l;
+        return (StopsCacheLoader) mCacheLoader;
+    }
+
     @Override
     protected void updateData() {
+        StopsCacheLoader cacheLoader = getCacheLoader();
+        if (cacheLoader != null) {
+            StopsRequest req = new StopsRequest(mCallback.getMapView());
+            cacheLoader.update(req);
+        }
         StopsLoader loader = getLoader();
         if (loader != null) {
             StopsRequest req = new StopsRequest(mCallback.getMapView());
@@ -212,7 +243,7 @@ public class StopMapController extends BaseMapController implements
     public void onLoadFinished(Loader<StopsResponse> loader,
                                StopsResponse _response) {
         mCallback.showProgress(false);
-        final ObaStopsForLocationResponse response = _response.getResponse();
+        final ObaStopsForLocationInterface response = _response.getResponse();
 
         if (response == null) {
             // Initial install can generate a null response if all is still ok, so do nothing (#615)
@@ -220,7 +251,7 @@ public class StopMapController extends BaseMapController implements
         }
 
         if (response.getCode() != ObaApi.OBA_OK) {
-            BaseMapFragment.showMapError(response);
+            BaseMapFragment.showMapError((ObaStopsForLocationResponse)response);
             return;
         }
 
@@ -255,7 +286,7 @@ public class StopMapController extends BaseMapController implements
         }
 
         List<ObaStop> stops = Arrays.asList(response.getStops());
-        mCallback.showStops(stops, response);
+        mCallback.showStops(stops, (ObaReferences)response);
 
         if (mFirstStopLoad) {
             mFirstStopLoad = false;
@@ -329,6 +360,7 @@ public class StopMapController extends BaseMapController implements
                             "OBA REST API endpoint, aborting...");
                 return new StopsResponse(req, null);
             }
+
             //Make OBA REST API call to the server and return result
             ObaStopsForLocationResponse response =
                     new ObaStopsForLocationRequest.Builder(getContext(),
@@ -336,6 +368,13 @@ public class StopMapController extends BaseMapController implements
                             .setSpan(req.getLatSpan(), req.getLonSpan())
                             .build()
                             .call();
+
+            DBUtil.addStopsAndRoutesToDB(
+                Application.get().getApplicationContext(),
+                Arrays.asList(response.getStops()),
+                response.getRoutes()
+            );
+
             return new StopsResponse(req, response);
         }
 
@@ -366,4 +405,64 @@ public class StopMapController extends BaseMapController implements
         }
     }
 
+    //
+    // Loader
+    //
+    private static class StopsCacheLoader extends AsyncTaskLoader<StopsResponse> {
+
+        private final Callback mFragment;
+
+        private StopsRequest mRequest;
+
+        public StopsCacheLoader(Callback fragment) {
+            super(fragment.getActivity());
+            mFragment = fragment;
+        }
+
+        @Override
+        public StopsResponse loadInBackground() {
+            StopsRequest req = mRequest;
+            if (Application.get().getCurrentRegion() == null &&
+                    TextUtils.isEmpty(Application.get().getCustomApiUrl())) {
+                //We don't have region info or manually entered API to know what server to contact
+                Log.d(TAG, "Trying to load stops from server without " +
+                        "OBA REST API endpoint, aborting...");
+                return new StopsResponse(req, null);
+            }
+
+            List<ObaStop> stops = DBUtil.queryStopsFromDB(getContext(), req.getCenter(), req.getLatSpan(), req.getLonSpan());
+            List<ObaRoute> routes = DBUtil.queryRoutesFromDB(getContext(), stops);
+            Log.i(TAG, "Cached stop data: " + stops.toString());
+            Log.i(TAG, "Cached route data: " + routes.toString());
+
+            ObaStopsForLocationCacheResponse response = new ObaStopsForLocationCacheResponse(
+                stops.toArray(new ObaStop[]{}),  routes.toArray(new ObaRoute[]{})
+            );
+
+            return new StopsResponse(req, response);
+        }
+
+        @Override
+        public void deliverResult(StopsResponse data) {
+            super.deliverResult(data);
+        }
+
+        @Override
+        public void onStartLoading() {
+            if (takeContentChanged()) {
+                forceLoad();
+            }
+        }
+
+        @Override
+        public void onForceLoad() {
+            mFragment.showProgress(true);
+            super.onForceLoad();
+        }
+
+        public void update(StopsRequest req) {
+            mRequest = req;
+            onContentChanged();
+        }
+    }
 }

@@ -25,7 +25,10 @@ import org.onebusaway.android.io.elements.ObaStopElement;
  *
  * @author Paul Watts (paulcwatts@gmail.com)
  */
-public final class ObaStopsForLocationResponse extends ObaResponseWithRefs {
+public final class ObaStopsForLocationResponse
+    extends ObaResponseWithRefs
+    implements ObaStopsForLocationInterface
+{
 
     private static final class Data {
 
@@ -69,6 +72,7 @@ public final class ObaStopsForLocationResponse extends ObaResponseWithRefs {
     /**
      * @return Whether the request is out of range of the coverage area.
      */
+    @Override
     public boolean getOutOfRange() {
         return data.outOfRange;
     }
@@ -76,6 +80,7 @@ public final class ObaStopsForLocationResponse extends ObaResponseWithRefs {
     /**
      * @return Whether the results exceeded the limits of the response.
      */
+    @Override
     public boolean getLimitExceeded() {
         return data.limitExceeded;
     }

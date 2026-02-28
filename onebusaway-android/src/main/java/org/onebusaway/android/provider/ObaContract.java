@@ -41,6 +41,7 @@ import android.provider.BaseColumns;
 import android.text.format.Time;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The contract between clients and the ObaProvider.
@@ -112,6 +113,22 @@ public final class ObaContract {
          * </P>
          */
         public static final String REGION_ID = "region_id";
+
+        /**
+         * The parent stop ID
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PARENT = "parent";
+
+        /**
+         * The short display name of the platform
+         * <P>
+         * Type: TEXT
+         * </P>
+         */
+        public static final String PLATFORM_CODE = "platform_code";
     }
 
     protected interface RoutesColumns {
@@ -955,9 +972,10 @@ public final class ObaContract {
          * @param stopId  The stop ID.
          * @param filter  An array of route IDs to filter.
          */
-        public static void set(Context context,
+        public static void set(
+                Context context,
                 String stopId,
-                ArrayList<String> filter) {
+                List<String> filter) {
             if (context == null) {
                 return;
             }
@@ -975,6 +993,18 @@ public final class ObaContract {
             for (int i = 0; i < len; ++i) {
                 args.put(ROUTE_ID, filter.get(i));
                 cr.insert(CONTENT_URI, args);
+            }
+        }
+
+        public static void setIfStopMissing(
+                Context context,
+                String stopId,
+                List<String> filter) {
+            if (context == null) {
+                return;
+            }
+            if (get(context, stopId).isEmpty()) {
+                set(context, stopId, filter);
             }
         }
     }

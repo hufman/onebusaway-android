@@ -78,6 +78,18 @@ public final class ObaRouteElement implements ObaRoute {
 
     }
 
+    public ObaRouteElement(String id, String shortName, String longName) {
+        this.id = id;
+        this.shortName = shortName;
+        this.longName = longName;
+        this.description = longName;
+        type = 0;
+        url = "";
+        color = "";
+        textColor = "";
+        agencyId = "";
+    }
+
     @Override
     public String getId() {
         return id;

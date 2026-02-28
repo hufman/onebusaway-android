@@ -602,8 +602,8 @@ public class TripDetailsListFragment extends ListFragment {
             ObaStop destStop = refs.getStop(destStopId);
             ObaStop lastStop = refs.getStop(lastStopId);
 
-            DBUtil.addToDB(lastStop);
-            DBUtil.addToDB(destStop);
+            DBUtil.addStopToDB(lastStop);
+            DBUtil.addStopToDB(destStop);
 
             Intent serviceIntent = new Intent(getContext(), NavigationService.class);
 

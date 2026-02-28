@@ -49,7 +49,7 @@ public class ObaProvider extends ContentProvider {
 
     private class OpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 33;
+        private static final int DATABASE_VERSION = 35;
 
         public OpenHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -322,6 +322,20 @@ public class ObaProvider extends ContentProvider {
             if (oldVersion == 32){
                 db.execSQL("ALTER TABLE " + ObaContract.Regions.PATH +
                         " ADD COLUMN " + ObaContract.Regions.PLAUSIBLE_ANALYTICS_SERVER_URL + " VARCHAR DEFAULT NULL");
+                ++oldVersion;
+            }
+            if (oldVersion == 33) {
+                db.execSQL("CREATE INDEX idx_" + ObaContract.Stops.PATH + "_latitude_longitude " +
+                        " ON " + ObaContract.Stops.PATH + " (" +
+                        ObaContract.StopsColumns.LATITUDE + "," + ObaContract.StopsColumns.LONGITUDE + ")");
+                ++oldVersion;
+            }
+            if (oldVersion == 34) {
+                db.execSQL("ALTER TABLE " + ObaContract.Stops.PATH +
+                        " ADD COLUMN " + ObaContract.Stops.PARENT + " VARCHAR DEFAULT NULL");
+                db.execSQL("ALTER TABLE " + ObaContract.Stops.PATH +
+                        " ADD COLUMN " + ObaContract.Stops.PLATFORM_CODE + " VARCHAR DEFAULT NULL");
+                ++oldVersion;
             }
         }
 
@@ -514,6 +528,8 @@ public class ObaProvider extends ContentProvider {
         sStopsProjectionMap.put(ObaContract.Stops.USER_NAME, ObaContract.Stops.USER_NAME);
         sStopsProjectionMap.put(ObaContract.Stops.ACCESS_TIME, ObaContract.Stops.ACCESS_TIME);
         sStopsProjectionMap.put(ObaContract.Stops.FAVORITE, ObaContract.Stops.FAVORITE);
+        sStopsProjectionMap.put(ObaContract.Stops.PARENT, ObaContract.Stops.PARENT);
+        sStopsProjectionMap.put(ObaContract.Stops.PLATFORM_CODE, ObaContract.Stops.PLATFORM_CODE);
         sStopsProjectionMap.put(ObaContract.Stops._COUNT, "count(*)");
         sStopsProjectionMap.put(ObaContract.Stops.UI_NAME,
                 "CASE WHEN " + ObaContract.Stops.USER_NAME + " IS NOT NULL THEN " +

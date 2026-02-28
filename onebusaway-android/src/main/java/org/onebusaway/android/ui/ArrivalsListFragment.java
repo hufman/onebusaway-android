@@ -435,7 +435,7 @@ public class ArrivalsListFragment extends ListFragment implements LoaderManager.
         if (result.getCode() == ObaApi.OBA_OK) {
             if (mStop == null) {
                 mStop = result.getStop();
-                DBUtil.addToDB(mStop);
+                DBUtil.addStopToDB(mStop);
             }
             info = result.getArrivalInfo();
             situations = UIUtils.getAllSituations(result, mRoutesFilter);
