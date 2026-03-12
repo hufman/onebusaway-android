@@ -20,6 +20,8 @@ public class MapParams {
     // These specify the initial state of the map, or the frozen state.
     public static final String MODE = ".MapMode";
 
+    public static final String PAUSE_TIME = ".PauseTime";
+
     public static final String STOP_ID = ".StopId";
 
     public static final String STOP_NAME = ".StopName";

@@ -382,7 +382,18 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            long pauseTime;
+            long pauseTimeThreshold = System.nanoTime() - 300 * (long)1e9;
+            pauseTime = savedInstanceState.getLong(MapParams.PAUSE_TIME, System.nanoTime());
+            if (pauseTime < pauseTimeThreshold) {
+                Log.d("HomeActivity", "Ignoring savedInstanceState");
+                savedInstanceState = null;
+            }
+        }
+
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+
         super.onCreate(savedInstanceState);
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
@@ -459,6 +470,10 @@ public class HomeActivity extends AppCompatActivity
         if(WeatherUtils.isWeatherViewHiddenPref()){
             WeatherUtils.toggleWeatherViewVisibility(false,weatherView);
         }
+        // Hide the panel if we don't have a current stop
+        if (mFocusedStopId == null) {
+            mSlidingPanel.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        }
         // Make sure header has sliding panel state
         if (mArrivalsListHeader != null && mSlidingPanel != null) {
             mArrivalsListHeader.setSlidingPanelCollapsed(isSlidingPanelCollapsed());
@@ -497,6 +512,7 @@ public class HomeActivity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putLong(MapParams.PAUSE_TIME, System.nanoTime());
         if (mFocusedStopId != null) {
             outState.putString(MapParams.STOP_ID, mFocusedStopId);
 
